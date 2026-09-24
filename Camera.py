@@ -1,13 +1,15 @@
-import cv2, os, sys, time
+import cv2, os, sys, time, csv
+import numpy as np
 
 class Camera:
     def capture_when_face_detected(self):
         cam = cv2.VideoCapture(0)   # 0 = default 
         xml = 'haarcascade_frontalface_default.xml'
         face_detector = cv2.CascadeClassifier(xml)
+        
         file_name = 'captured_image'
         folder_name = 'Saved-Images'
-        # Create folder if it doesn't exist
+        # Create folder
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
         
@@ -37,14 +39,14 @@ class Camera:
                     minNeighbors = 3,   # Used when comparing reference image with captured image 'Neighbors' is the number of faces detected.
                     minSize = (50, 50),
                 )
-
+    
                 for x, y, width, height in faces:
                     cv2.rectangle(
                         frame,
                         (x, y),
                         (x + width, y + height),
                         (0, 255, 0),
-                        2,
+                        1,
                     )
                     
                     # Add extra space around the detected face
@@ -66,7 +68,8 @@ class Camera:
                             image_number += 1
                             image_file = os.path.join(folder_name, file_name + '_' + str(image_number) + '.png')
 
-                        cv2.imwrite(image_file, cropped_face)
+                        grayscale_face = cv2.cvtColor(cropped_face, cv2.COLOR_BGR2GRAY)
+                        cv2.imwrite(image_file, grayscale_face)
                         print(f'Face detected. Image saved as {image_file}.')
                         last_save_time = current_time
 
