@@ -1,4 +1,4 @@
-import cv2, os, sys
+import cv2, os, sys, time
 
 class Camera:
     def capture_when_face_detected(self):
@@ -6,7 +6,15 @@ class Camera:
         xml = 'haarcascade_frontalface_default.xml'
         face_detector = cv2.CascadeClassifier(xml)
         file_name = 'captured_image'
+        folder_name = 'Saved-Images'
+        # Create folder if it doesn't exist
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+        
+        image_number = 1
+        image_file = os.path.join(folder_name, file_name + '_' + str(image_number) + '.png')
         user_image = cv2.imread(file_name)
+        last_save_time = 0  # Track when last image was saved
         
         # Check if the camera opened successfully
         if not cam.isOpened():
@@ -38,18 +46,29 @@ class Camera:
                         (0, 255, 0),
                         2,
                     )
+                    
+                    # Add extra space around the detected face
+                    added_space = 40
+                    x_start = max(0, x - added_space)
+                    y_start = max(0, y - added_space)
+                    x_end = min(frame.shape[1], x + width + added_space)
+                    y_end = min(frame.shape[0], y + height + added_space)
+                    cropped_face = frame[y_start:y_end, x_start:x_end]
 
                 cv2.imshow('Camera', frame)
 
                 if len(faces) > 0:
-                    # Find next available filename
-                    while os.path.exists(image_constant):
-                        image_number += 1
-                        image_constant = file_name + '_' + str(image_number) + '.png'
-                    
-                    cv2.imwrite(image_constant, frame)
-                    print(f'Face detected. Image saved as {image_constant}.')
-                    break
+                    current_time = time.time()
+                    # Only save image if 5 seconds have passed since last save
+                    if current_time - last_save_time >= 5:
+                        # Find next available file name
+                        while os.path.exists(image_file):
+                            image_number += 1
+                            image_file = os.path.join(folder_name, file_name + '_' + str(image_number) + '.png')
+
+                        cv2.imwrite(image_file, cropped_face)
+                        print(f'Face detected. Image saved as {image_file}.')
+                        last_save_time = current_time
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
