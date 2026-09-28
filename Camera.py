@@ -1,14 +1,15 @@
 import cv2, os, sys, time, csv
-import numpy as np
+
+user_id = input('Enter your user ID: ') # Need to change get ID from NFC reader
 
 class Camera:
-    def capture_when_face_detected(self):
+    def capture_detected_face(self):
         cam = cv2.VideoCapture(0)   # 0 = default 
         xml = 'haarcascade_frontalface_default.xml'
         face_detector = cv2.CascadeClassifier(xml)
         
-        file_name = 'captured_image'
-        folder_name = 'Saved-Images'
+        file_name = 'captured_image' + time.strftime('%Y%m%d-%H%M%S')  # File name based on timestamp
+        folder_name = user_id + '_Photo'  # Folder name based on user ID
         # Create folder
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
@@ -36,7 +37,7 @@ class Camera:
                 faces = face_detector.detectMultiScale(
                     gray_captured,
                     scaleFactor = 1.1,
-                    minNeighbors = 3,   # Used when comparing reference image with captured image 'Neighbors' is the number of faces detected.
+                    minNeighbors = 1,   # Used when comparing reference image with captured image 'Neighbors' is the number of faces detected.
                     minSize = (50, 50),
                 )
     
@@ -59,7 +60,7 @@ class Camera:
 
                 cv2.imshow('Camera', frame)
 
-                if len(faces) > 0:
+                if len(faces) == 1:  # Only save image if exactly one face is detected
                     current_time = time.time()
                     # Only save image if 5 seconds have passed since last save
                     if current_time - last_save_time >= 5:
@@ -82,4 +83,4 @@ class Camera:
 
 
 if __name__ == '__main__':
-    Camera().capture_when_face_detected()
+    Camera().capture_detected_face()
