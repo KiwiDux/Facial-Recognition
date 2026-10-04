@@ -1,6 +1,7 @@
 import cv2, os, sys, time, csv
 import numpy as np
 
+
 class Camera:   # Captures face crops from the webcam and stores them per person.
     
     def __init__(self, folder = 'Saved-Images', padding = 40, min_sharpness = 0.15):
@@ -17,7 +18,7 @@ class Camera:   # Captures face crops from the webcam and stores them per person
     def detection_setting(self, scale_factor = 1.0, min_neighbors = 3, min_size = (70, 70)):
         self.scale_factor = scale_factor    # lower = stricter (dlib default is 0.6)
         self.min_neighbors = min_neighbors  # how many neighbors each candidate rectangle should have to retain it
-        self.min_size = min_size            # minimum possible object size. Objects smaller than that are ignored.
+        self.min_size = min_size            # minimum possible object size. Objects smaller than that are ignored. e.g. (70, 70) pixels
         
         gray_captured = cv2.cvtColor(cv2.imread('test_image.jpg'), cv2.COLOR_BGR2GRAY)
         faces = self.face_detector.detectMultiScale(
@@ -37,34 +38,38 @@ class Camera:   # Captures face crops from the webcam and stores them per person
         y_end = min(image.shape[0], y + height + added_space)
         return image[y_start:y_end, x_start:x_end]
 
+
     # \/ to organise 
     def capture_face(self, faces):
         cam = cv2.VideoCapture(0)   # 0 = default 
+        file_name = f'captured_image_{input_name}'
         
-        file_name = 'captured_image'
         folder_name = self.folder
-        # Create folder
+        # Create folder if it doesn't exist
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
         
-        image_number = 1
+        image_number = 1    # image number to save as, incremented if file already exists
+        count = 5          # number of images to capture
         image_file = os.path.join(folder_name, file_name + '_' + str(image_number) + '.png')
         user_image = cv2.imread(file_name)
         last_save_time = 0  # Track when last image was saved
+        saved = len(os.listdir(folder_name))
+        target = saved + count  # target number of images to save
         
         # Check if the camera opened successfully
         if not cam.isOpened():
             print('Failed to open camera.')
             return
 
+        last_save = 0
         try:
-            while True:
+            while saved < target:
                 ret, frame = cam.read()
                 if not ret:
                     print('Failed to capture image.')
                     break
 
-    
                 for x, y, width, height in faces:
                     cv2.rectangle(
                         frame,
@@ -79,7 +84,7 @@ class Camera:   # Captures face crops from the webcam and stores them per person
 
                 cv2.imshow('Camera', frame)
 
-                if len(faces) > 0:
+                if len(faces) == 0:
                     current_time = time.time()
                     # Only save image if 5 seconds have passed since last save
                     if current_time - last_save_time >= 5:
@@ -102,4 +107,7 @@ class Camera:   # Captures face crops from the webcam and stores them per person
 
 
 if __name__ == '__main__':
-    Camera().capture_face()
+    input_name = input('Enter the name of the person: ')
+    camera = Camera()
+    camera.capture_face()
+
