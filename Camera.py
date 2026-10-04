@@ -1,6 +1,6 @@
 import cv2, os, sys, time, csv
-import numpy as np
 
+user_id = input('Enter your user ID: ') # Need to change get ID from NFC reader
 
 class Camera:   # Captures face crops from the webcam and stores them per person.
     
@@ -84,7 +84,7 @@ class Camera:   # Captures face crops from the webcam and stores them per person
 
                 cv2.imshow('Camera', frame)
 
-                if len(faces) == 0:
+                if len(faces) == 1:  # Only save image if exactly one face is detected
                     current_time = time.time()
                     # Only save image if 5 seconds have passed since last save
                     if current_time - last_save_time >= 5:
