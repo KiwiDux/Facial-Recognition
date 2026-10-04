@@ -2,14 +2,48 @@ import cv2, os, sys, time, csv
 
 user_id = input('Enter your user ID: ') # Need to change get ID from NFC reader
 
-class Camera:
-    def capture_detected_face(self):
-        cam = cv2.VideoCapture(0)   # 0 = default 
-        xml = 'haarcascade_frontalface_default.xml'
-        face_detector = cv2.CascadeClassifier(xml)
+class Camera:   # Captures face crops from the webcam and stores them per person.
+    
+    def __init__(self, folder = 'Saved-Images', padding = 40, min_sharpness = 0.15):
+        self.folder = folder                # folder to save images
+        self.padding = padding              # fraction of face size added around the box
+        self.min_sharpness = min_sharpness  # reject blurry frames (Laplacian)
         
-        file_name = 'captured_image' + time.strftime('%Y%m%d-%H%M%S')  # File name based on timestamp
-        folder_name = user_id + '_Photo'  # Folder name based on user ID
+        xml = 'haarcascade_frontalface_default.xml'
+        self.face_detector = cv2.CascadeClassifier(xml)
+        if self.face_detector.empty():
+            raise RuntimeError(f'Unable to load the face detector xml file: {xml}.')
+
+
+    def detection_setting(self, scale_factor = 1.0, min_neighbors = 3, min_size = (70, 70)):
+        self.scale_factor = scale_factor    # lower = stricter (dlib default is 0.6)
+        self.min_neighbors = min_neighbors  # how many neighbors each candidate rectangle should have to retain it
+        self.min_size = min_size            # minimum possible object size. Objects smaller than that are ignored.
+        
+        gray_captured = cv2.cvtColor(cv2.imread('test_image.jpg'), cv2.COLOR_BGR2GRAY)
+        faces = self.face_detector.detectMultiScale(
+            gray_captured,
+            scaleFactor = self.scale_factor,
+            minNeighbors = self.min_neighbors,
+            minSize = self.min_size,
+        )
+        return faces
+
+    
+    def crop_face(self, image, x, y, width, height):
+        added_space = self.padding
+        x_start = max(0, x - added_space)
+        y_start = max(0, y - added_space)
+        x_end = min(image.shape[1], x + width + added_space)
+        y_end = min(image.shape[0], y + height + added_space)
+        return image[y_start:y_end, x_start:x_end]
+
+    # \/ to organise 
+    def capture_face(self, faces):
+        cam = cv2.VideoCapture(0)   # 0 = default 
+        
+        file_name = 'captured_image'
+        folder_name = self.folder
         # Create folder
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
@@ -31,15 +65,6 @@ class Camera:
                     print('Failed to capture image.')
                     break
 
-                # Gray scale conversion for face detection
-                gray_captured = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                
-                faces = face_detector.detectMultiScale(
-                    gray_captured,
-                    scaleFactor = 1.1,
-                    minNeighbors = 1,   # Used when comparing reference image with captured image 'Neighbors' is the number of faces detected.
-                    minSize = (50, 50),
-                )
     
                 for x, y, width, height in faces:
                     cv2.rectangle(
@@ -51,12 +76,7 @@ class Camera:
                     )
                     
                     # Add extra space around the detected face
-                    added_space = 40
-                    x_start = max(0, x - added_space)
-                    y_start = max(0, y - added_space)
-                    x_end = min(frame.shape[1], x + width + added_space)
-                    y_end = min(frame.shape[0], y + height + added_space)
-                    cropped_face = frame[y_start:y_end, x_start:x_end]
+                    cropped_face = self.crop_face(frame, x, y, width, height)
 
                 cv2.imshow('Camera', frame)
 
@@ -83,4 +103,4 @@ class Camera:
 
 
 if __name__ == '__main__':
-    Camera().capture_detected_face()
+    Camera().capture_face()
