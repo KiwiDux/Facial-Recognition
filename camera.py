@@ -3,7 +3,8 @@ import cv2, os, sys, time
 detector_model = 'face_detection_yunet_2023mar.onnx'
 recognizer_model = 'face_recognition_sface_2021dec.onnx'
 employee_folder = 'employees'
-match_threshold = 0.363
+match_threshold = 0.363 # threshold for face matching | default = 0.363 (lower = stricter)
+
 
 class Camera:   # Captures face crops from the webcam and stores them per person.
 
@@ -20,7 +21,7 @@ class Camera:   # Captures face crops from the webcam and stores them per person
  
  
     def detection_setting(self, scale_factor = 1.0, min_neighbors = 3, min_size = (70, 70)):
-        self.scale_factor = scale_factor    # lower = stricter (dlib default is 0.6)
+        self.scale_factor = scale_factor    # lower = stricter | dlib default is 0.6
         self.min_neighbors = min_neighbors  # how many neighbors each candidate rectangle should have to retain it
         self.min_size = min_size            # minimum possible object size. Objects smaller than that are ignored. e.g. (70, 70) pixels
         

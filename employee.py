@@ -27,7 +27,9 @@ def identify_employee(uid):     #Return (uid, name) for a card UID and record th
     try:
         info = load_info(uid)
     except FileNotFoundError:  # card not registered yet
-        name = input('New card. Enter the name of the person: ')
+        first_name = input('New card. Enter the name of the person: ')
+        last_name = input('Enter the last name of the person: ')
+        name = f'{first_name} {last_name}'
         info = {'name': name, 'pictures': {}}
 
     info['last_logged'] = timestamp()
