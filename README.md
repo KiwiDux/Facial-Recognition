@@ -1,3 +1,3 @@
 Current dependencies: 
-opencv-python
+opencv-python, 
 pyscard
